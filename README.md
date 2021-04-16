@@ -27,7 +27,7 @@
   <h3 align="center">Octopus-DataFrame</h3>
 
   <p align="center">
-    A cross-platform pandas-like DataFrame base on pandas, spark and dask.
+     A cross-platform pandas-like DataFrame base on Pandas, Spark, and Dask.
     <!-- <br />
     <a href="https://github.com/PasaLab/Octopus-DF"><strong>Explore the docs »</strong></a>
     <br /> -->
@@ -78,8 +78,8 @@
 Octopus-DF, which integrates Pandas, Dask, and Spark as the backend computing platforms and exposes the most widely used Pandas-style APIs to users.
 
 Why Octopus-DF?
-* Efficient for diffrent data scales. A DataFrame-based algorithm has quite different performances over different platforms with various data scales, it is not efficient to process DataFrame of different scales
-* Ease to use. Octopus-DF provide Pandas-style API for data analysts to model and develop their problems and programs.
+*  Efficient for different data scales. A DataFrame-based algorithm has quite different performances over various platforms with various data scales. It is not efficient to process the DataFrame of different data scales on a single platform. Octopus-DF integrates Pandas, Dask, and Spark, which make it efficient for different data scales.
+* Ease to use. Octopus-DF provides Pandas-style API for data analysts to model and develops their problems and programs.
 
 
 ### Built With
@@ -124,13 +124,14 @@ You should install **python3.6+** environment first.
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Octopus-DF is built on pandas, spark, and dask, you need to deploy them on your distributed environment first. For spark, we use [Spark on Yarn](https://spark.apache.org/docs/2.3.2/running-on-yarn.html) mode. For dask, we use [dask distributed](https://distributed.dask.org/en/latest/). Please first check the official documentation to complete the installation and deployment.
+Octopus-DF is built on Pandas, Spark, and Dask. You need to deploy them in your distributed environment first. For spark, we use [Spark on Yarn](https://spark.apache.org/docs/2.3.2/running-on-yarn.html) mode. For Dask, we use [dask distributed](https://distributed.dask.org/en/latest/). Please first check the official documentation to complete the installation and deployment.
 
-To optimize the secondary index, you should install redis first. The suggested way of installing Redis is compiling it from sources as Redis has no dependencies other than a working GCC compiler and libc.  Please check the [redis official documentation](https://redis.io/topics/quickstart) to complete the installation and deployment. 
+To optimize the secondary index, you should install Redis first. The suggested way of installing Redis is compiling it from sources as Redis has no dependencies other than a working GCC compiler and libc.  Please check the [redis official documentation](https://redis.io/topics/quickstart) to complete the installation and deployment. 
 
-In order to optimize the local index, you should install plasma store first. In stand-alone mode, install `pyarrow0.11.1` on the local machine (`pip install pyarrow==0.11.1`), and use  `plasma_store –m 1000000000 –s /tmp/plasma &` to open up memory space to store memory objects. The above command opens up 1g of memory space For details, please refer to [plasma official documentation](http://arrow.apache.org/docs/python/plasma.html#starting-the-plasma-store). In cluster mode, install on each machine and start the plasma store process.
+To optimize the local index, you should install plasma store first. In stand-alone mode, install `pyarrow0.11.1` on the local machine (`pip install pyarrow==0.11.1`), and use  `plasma_store –m 1000000000 –s /tmp/plasma &` to open up memory space to store memory objects. The above command opens up 1g of memory space. For details, please refer to [official plasma documentation](http://arrow.apache.org/docs/python/plasma.html#starting-the-plasma-store). In cluster mode, install on each machine and start the plasma store process.
 
-When you install and deploy the above dependencies, you need to config Octopus-DF by edit `$HOME/.config/octopus/config.ini` file.
+When you install and deploy the above dependencies, you need to config Octopus-DF by editing  the` $HOME/.config/octopus/config.ini` file.
+
 
 The configuration example is as follows:
 ```
@@ -149,7 +150,7 @@ SPARK_YARN_JARS = hdfs://host:port/path/to/spark/jars    # jars for spark runtim
 SPARK_DEBUG_MAX_TO_STRING_FIELDS = 1000
 SPARK_YARN_EXECUTOR_MEMORYOVERHEAD = 10g
 ```
-For imperative interface such as SparkDataFrame and OctDataFrame, using Octopus-DF is like using pandas.
+For imperative interfaces such as SparkDataFrame and OctDataFrame, using Octopus-DF is like using pandas.
 
 ### SparkDataFrame
 ```python
@@ -169,7 +170,7 @@ print(odf.head(100))
 print(odf.loc[0:10:2,:])
 print(odf.filter(like='1'))
 ```
-For declarative interface such as SymbolDataframe, using Octopus-DF is like using spark, due to its lazy computation, you should call `compute()` to do the calculation.
+For declarative interfaces such as SymbolDataframe, using Octopus-DF is like using spark. Due to its lazy computation mechanism, you should call `compute()` to do the calculation.
 ### SymbolDataFrame
 
 ```python
@@ -177,7 +178,7 @@ from Octopus.dataframe.core.symbolDataFrame import SymbolDataFrame
 # engine_type can be dask, pandas. 
 # If not declared, Octopus-DF will automatically select the best platform.
 # Note that this function is experimental, need to be improved.
-odf = SymbolDataFrame.from_csv(filie_path,engine_type='Spark')
+odf = SymbolDataFrame.from_csv(filie_path,engine_type='spark')
 odf1 = odf.iloc[0:int(0.8*M):2,:]
 odf2 = odf1.iloc[0:int(0.2*M):1,:]
 odf2.compute()
