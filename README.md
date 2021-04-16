@@ -124,8 +124,7 @@ You should install **python3.6+** environment first.
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-Because Octopus-DF is built on pandas, spark, and dask, you need to deploy them on your distributed environment first. For spark, we use [Spark on Yarn](https://spark.apache.org/docs/2.3.2/running-on-yarn.html) mode. For dask, we use [dask distributed](https://distributed.dask.org/en/latest/). Please first check the official documentation to complete the installation and deployment.
+Octopus-DF is built on pandas, spark, and dask, you need to deploy them on your distributed environment first. For spark, we use [Spark on Yarn](https://spark.apache.org/docs/2.3.2/running-on-yarn.html) mode. For dask, we use [dask distributed](https://distributed.dask.org/en/latest/). Please first check the official documentation to complete the installation and deployment.
 
 To optimize the secondary index, you should install redis first. The suggested way of installing Redis is compiling it from sources as Redis has no dependencies other than a working GCC compiler and libc.  Please check the [redis official documentation](https://redis.io/topics/quickstart) to complete the installation and deployment. 
 
