@@ -183,7 +183,6 @@ odf2 = odf1.iloc[0:int(0.2*M):1,:]
 odf2.compute()
 ```
 
-ROADMAP
 ## Roadmap
 
 See the [open issues](https://github.com/PasaLab/Octopus-DF/issues) for a list of proposed features (and known issues).
