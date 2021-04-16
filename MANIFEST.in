@@ -1,0 +1,3 @@
+include tests/dataframe/test_data/MDOrderRecord.csv
+include tests/dataframe/test_data/MDStockRecord.csv
+include tests/dataframe/test_data/MDTransactionRecord.csv
