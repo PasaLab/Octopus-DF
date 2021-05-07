@@ -4,6 +4,7 @@
 import logging
 import pyarrow as pa
 import dask.dataframe as dd
+from Octopus.dataframe.core.sparkDataFrame import SparkDataFrame
 from dask.distributed import Client
 
 from Octopus.dataframe.core.utils import derived_from, exe_time, IdGenerator
@@ -466,7 +467,7 @@ class SymbolDataFrame(object):
                 import pandas as pd
                 pdf = pd.read_csv(path)
             else:
-                pdf = dd.read_csv(path).compute()
+                pdf = SparkDataFrame.from_csv(path)
             if 8000 > len(pdf.index):
                 rate = (1, 1)
                 df_sample = pdf
@@ -657,7 +658,6 @@ class SymbolDataFrame(object):
         right.children.append(id)
         if self.engine_type is None:
             df_next = self.df_sample.merge(right.df_sample,
-                                           right=right,
                                            how=how,
                                            on=on,
                                            left_on=left_on,
@@ -667,7 +667,7 @@ class SymbolDataFrame(object):
                                            suffixes=suffixes,
                                            copy=copy,
                                            indicator=indicator,
-                                           validate=validate,
+                                           validate=validate
                                            )
             return SymbolDataFrame(prev=[self.id, right.id], func="merge", id=id,
                                    right=right,
@@ -773,7 +773,8 @@ class SymbolDataFrame(object):
         self.children.append(id)
 
         if self.engine_type is None:
-            df_next = self.df_sample.sum(axis=axis, skipna=skipna, split_every=split_every)
+            # df_next = self.df_sample.sum(axis=axis, skipna=skipna, split_every=split_every)
+            df_next = self.df_sample.sum(axis=axis, skipna=skipna) # 这里学长的实现会报错，把split_every去掉就好了
             return SymbolDataFrame(prev=[self.id],
                                    func="sum",
                                    id=id,
@@ -781,7 +782,7 @@ class SymbolDataFrame(object):
                                    skipna=skipna,
                                    df_sample=df_next,
                                    rate=self.rate,
-                                   size=(len(df_next.index) / self.rate[0], len(df_next.columns) / self.rate[1]),
+                                   # size=(len(df_next.index) / self.rate[0], len(df_next.columns) / self.rate[1]),
                                    )
         else:
             return SymbolDataFrame(prev=[self.id],
@@ -1051,10 +1052,10 @@ class SymbolDataFrame(object):
             self.platforms[platform] = self.update_queue[-1].platforms[platform]
             self.update_queue = []
 
-        for child in self.children:
-            child_platform = optimized_id_platform_map[child]
-            if self.platforms[child_platform] is None:
-                self.transfer(self.platforms[platform], platform, child_platform)
+        # for child in self.children:
+        #     child_platform = optimized_id_platform_map[child]
+        #     if self.platforms[child_platform] is None:
+        #         self.transfer(self.platforms[platform], platform, child_platform)
 
     # 注意使用PandasDataFrame 而非原生Pandas
     def transfer(self, data, source, target):
@@ -1141,8 +1142,8 @@ class SymbolDataFrame(object):
             return
         key = id_df_map[self.orders[start]].kwargs['key']
         prev_id = id_df_map[self.orders[start]].prev[0]
-        id_df_map.pop(self.orders[start])
-        optimized_id_platform_map.pop(self.orders[start])
+        # id_df_map.pop(self.orders[start])
+        # optimized_id_platform_map.pop(self.orders[start])
         tmp_orders = self.orders[:start:]
 
         for i in range(start + 1, end):
@@ -1150,8 +1151,9 @@ class SymbolDataFrame(object):
             key = (SymbolDataFrame.merge_iloc_key(key[0], cur_key[0]),
                    SymbolDataFrame.merge_iloc_key(key[1], cur_key[1]))
             # remove start to end from id_df_map
-            id_df_map.pop(self.orders[i])
-            optimized_id_platform_map.pop(self.orders[i])
+            # if(i != end-1):
+            #     id_df_map.pop(self.orders[i])
+            #     optimized_id_platform_map.pop(self.orders[i])
 
         # add SymbolDataFrame which has new_key
         sdf = id_df_map[prev_id].iloc[key]
@@ -1220,26 +1222,57 @@ class SymbolDataFrame(object):
     def get_default_execution_platform(self):
         pass
 
-    def compute(self):
+    def compute(self,dag_opt=True):
         # 拓扑排序
         # 启发式搜索
         # 根据最小二乘拟合的数据来计算时间 + API 读写hdfs的转换时间
         # for id in id_df_map.keys():
         #     print(id, id_df_map[id].func)
         self.orders, self.dag_exist_common_ancestor = get_topological_order(self.id)
-        self.lineage_compress()
+        import time
+        # t0 = time.time()
+        if dag_opt:
+            self.lineage_compress()
+        # print("compression time(ms)",(time.time()-t0)*1500)
         self.get_default_execution_platform()
         if self.engine_type is None:
             if self.dag_exist_common_ancestor:
+                t0 = time.time()
                 self.get_best_execution_platforms()
+                print("heuristic search scheduler's time(s)", (time.time() - t0))
             else:
+                t0 = time.time()
                 self.get_best_execution_platforms_by_dp()
+                print("dp scheduler's time(s)", (time.time() - t0))
 
         # 保证读取数据和第一个运算在同一个平台上
         if len(self.orders) > 1:
             optimized_id_platform_map[self.orders[0]] = optimized_id_platform_map[self.orders[1]]
-
         return self.schedule()
+    def show_execution_plan(self):
+        self.orders, self.dag_exist_common_ancestor = get_topological_order(self.id)
+        import time
+        # t0 = time.time()
+        self.lineage_compress()
+        # print("compression time(ms)",(time.time()-t0)*1500)
+        self.get_default_execution_platform()
+        if self.engine_type is None:
+            if self.dag_exist_common_ancestor:
+                t0 = time.time()
+                self.get_best_execution_platforms()
+                print("heuristic search scheduler's time(s)", (time.time() - t0))
+            else:
+                t0 = time.time()
+                self.get_best_execution_platforms_by_dp()
+                print("dp scheduler's time(s)", (time.time() - t0))
+
+        # 保证读取数据和第一个运算在同一个平台上
+        if len(self.orders) > 1:
+            optimized_id_platform_map[self.orders[0]] = optimized_id_platform_map[self.orders[1]]
+        print("=========execution plan:================= ")
+        for k, v in optimized_id_platform_map.items():
+            print("operator: %s, platform: %s" % (id_df_map[k].func, v))
+        print("=========================================")
 
     def get_best_execution_platforms_by_dp(self):
         global optimized_id_platform_map
@@ -1356,13 +1389,17 @@ def get_read_csv_time(p, size):
 def get_operator_time(platform, df_id):
     args = calculate_operators_paras(platform, df_id)
     from Octopus.dataframe.predict.getPerformance import get_operator_time_by_size
-    return get_operator_time_by_size(platform, id_df_map[df_id].func, *args)
+    res = get_operator_time_by_size(platform, id_df_map[df_id].func, *args)
+    # print("df_id:%s, func_name :%s, platform: %s , execution_time:%s "%(df_id,id_df_map[df_id].func,platform,res))
+    return res
 
 
 def get_trans_time(prev_df_id, source, target):
     df = id_df_map[prev_df_id]
     size = df.size
-    return get_trans_time_by_size(source, target, size[0], size[1])
+    res = get_trans_time_by_size(source, target, size[0], size[1])
+    # print("df_id:%s, source: %s, target: %s, transfer_time: %s"%(prev_df_id,source,target,res))
+    return res
 
 
 def calculate_operators_paras(platform, df_id):
@@ -1386,6 +1423,8 @@ def calculate_operators_paras(platform, df_id):
 
 
 def get_origin_topological_order(cur, orders=[]):
+    if cur not in id_df_map:
+        return orders
     orders.append(cur)
     if id_df_map[cur].prev is None:
         return orders

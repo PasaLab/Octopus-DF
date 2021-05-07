@@ -27,7 +27,7 @@
   <h3 align="center">Octopus-DataFrame</h3>
 
   <p align="center">
-     A cross-platform pandas-like DataFrame base on Pandas, Spark, and Dask.
+     A cross-platform Pandas-like DataFrame base on Pandas, Spark, and Dask.
     <!-- <br />
     <a href="https://github.com/PasaLab/Octopus-DF"><strong>Explore the docs »</strong></a>
     <br /> -->
@@ -182,7 +182,11 @@ odf = SymbolDataFrame.from_csv(filie_path,engine_type='spark')
 odf1 = odf.iloc[0:int(0.8*M):2,:]
 odf2 = odf1.iloc[0:int(0.2*M):1,:]
 odf2.compute()
+
+# We can show the exectution plan and scheduler's execution time by show_execution_plan()
+odf2.show_execution_plan()
 ```
+
 
 ## Roadmap
 

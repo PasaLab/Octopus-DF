@@ -1,3 +1,7 @@
 include tests/dataframe/test_data/MDOrderRecord.csv
 include tests/dataframe/test_data/MDStockRecord.csv
 include tests/dataframe/test_data/MDTransactionRecord.csv
+include Octopus/dataframe/predict/models/Dask/*.csv
+include Octopus/dataframe/predict/models/Pandas/*.csv
+include Octopus/dataframe/predict/models/Spark/*.csv
+include Octopus/dataframe/predict/models/transfer/*.csv
